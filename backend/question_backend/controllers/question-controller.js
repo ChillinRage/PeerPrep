@@ -3,10 +3,11 @@ const Question = require('../models/question-model');
 
 // Create a new question
 module.exports.createQuestion = async (req, res) => {
-    let { title, description, topic, difficulty } = req.body;
+    let { title, description, topic, difficulty, input, expected_output, images, leetcode_link } = req.body;
     title = title.trim();
     description = description.trim();
     difficulty = difficulty.trim();
+    leetcode_link = leetcode_link ? leetcode_link.trim() : "";
     
     // Check if topic is an array and trim each element
     if (Array.isArray(topic)) {
@@ -18,7 +19,7 @@ module.exports.createQuestion = async (req, res) => {
     }
 
     // Check if all required fields are provided
-    if (!title || !description || !topic.length || !difficulty) {
+    if (!title || !description || !topic.length || !difficulty || !input || !expected_output) {
         return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -33,7 +34,11 @@ module.exports.createQuestion = async (req, res) => {
         title,
         description,
         topic,
-        difficulty
+        difficulty,
+        input,
+        expected_output,
+        images: images || [],
+        leetcode_link: leetcode_link || ""
     });
 
     try {
