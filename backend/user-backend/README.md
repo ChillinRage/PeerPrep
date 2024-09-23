@@ -62,7 +62,7 @@
     
         - Admin users: Can retrieve any user's data. The server verifies the user associated with the JWT token is an admin user and allows access to the requested user's data.
           
-        - Non-admin users: Can only retrieve their own data, or non-sensitive data of other users. The server checks if the user ID in the request URL matches the ID of the user associated with the JWT token. If it matches, the server returns the user's own data. Otherwise, it returns the other user's username and profile image.
+        - Non-admin users: Can only retrieve their own data or non-sensitive data of other users. The server checks if the user ID in the request URL matches the ID of the user associated with the JWT token. If it matches, the server returns the user's own data. Otherwise, it returns the other user's username and profile image.
     
 - Responses:
 
