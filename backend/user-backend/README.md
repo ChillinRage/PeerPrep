@@ -1,6 +1,6 @@
 ## Running User Service
 
-1. Open Command Line/Terminal and navigate into the `user-service` directory.
+1. Open Command Line/Terminal and navigate into the `user-backend` directory.
 
 2. Run the command: `npm install`. This will install all the necessary dependencies.
 
@@ -108,13 +108,14 @@
   - Required: `userId` path parameter
 
 - Body
-  - At least one of the following fields is required: `username` (string), `email` (string), `password` (string)
+  - At least one of the following fields is required: `username` (string), `email` (string), `password` (string), `profileImage` (string)
 
     ```json
     {
       "username": "SampleUserName",
       "email": "sample@gmail.com",
-      "password": "SecurePassword"
+      "password": "SecurePassword",
+      "profileImage": "pathToImage"
     }
     ```
 
