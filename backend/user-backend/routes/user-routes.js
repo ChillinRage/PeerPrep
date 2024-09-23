@@ -21,7 +21,7 @@ router.patch("/:id/privilege", verifyAccessToken, verifyIsAdmin, updateUserPrivi
 router.post("/", createUser);
 
 // Get a user
-router.get("/:id", verifyAccessToken, verifyIsOwnerOrAdmin, getUser);
+router.get("/:id", verifyAccessToken, getUser);
 
 // Update a user
 router.patch("/:id", verifyAccessToken, verifyIsOwnerOrAdmin, updateUser);

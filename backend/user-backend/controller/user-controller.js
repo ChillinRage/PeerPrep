@@ -1,5 +1,5 @@
 import { isValidObjectId } from "mongoose";
-import { hashPassword, replaceProfileImage } from "./user-controller-utils.js";
+import { getImageSignedUrl, hashPassword, replaceProfileImage } from "./user-controller-utils.js";
 import {
   createUser as _createUser,
   deleteUserById as _deleteUserById,
@@ -26,7 +26,7 @@ export async function createUser(req, res) {
 
       return res.status(201).json({
         message: `Created new user ${username} successfully`,
-        data: formatUserResponse(createdUser),
+        data: await formatFullUserResponse(createdUser),
       });
     } else {
       return res.status(400).json({ message: "username, email and/or password are missing" });
@@ -48,9 +48,13 @@ export async function getUser(req, res) {
     const user = await _findUserById(userId);
     if (!user) {
       return res.status(404).json({ message: `User ${userId} not found` });
-    } else {
-      return res.status(200).json({ message: `Found user`, data: formatUserResponse(user) });
     }
+
+    return res.status(200).json({
+      message: `Found user`,
+      data: await formatPartialUserResponse(user)
+    });
+
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Unknown error when getting user!" });
@@ -60,7 +64,10 @@ export async function getUser(req, res) {
 export async function getAllUsers(req, res) {
   try {
     const users = await _findAllUsers();
-    return res.status(200).json({ message: `Found users`, data: users.map(formatUserResponse) });
+    return res.status(200).json({
+      message: 'Found users',
+      data: await Promise.all(users.map(formatFullUserResponse))
+    });
 
   } catch (err) {
     console.error(err);
@@ -94,13 +101,14 @@ export async function updateUser(req, res) {
       }
 
       const hashedPassword = hashPassword(password);
-      const newImage = await replaceProfileImage(userId, profileImage, user.profileImage);
+      const newImage = await replaceProfileImage(user, profileImage);
 
       const updatedUser = await _updateUserById(userId, username, email, hashedPassword, newImage);
       return res.status(200).json({
         message: `Updated data for user ${userId}`,
-        data: formatUserResponse(updatedUser),
+        data: await formatFullUserResponse(updatedUser),
       });
+
     } else {
       return res.status(400).json({ message: "No field to update: username and email and password are all missing!" });
     }
@@ -127,7 +135,7 @@ export async function updateUserPrivilege(req, res) {
       const updatedUser = await _updateUserPrivilegeById(userId, isAdmin === true);
       return res.status(200).json({
         message: `Updated privilege for user ${userId}`,
-        data: formatUserResponse(updatedUser),
+        data: await formatFullUserResponse(updatedUser),
       });
     } else {
       return res.status(400).json({ message: "isAdmin is missing!" });
@@ -157,12 +165,20 @@ export async function deleteUser(req, res) {
   }
 }
 
-export function formatUserResponse(user) {
+export async function formatPartialUserResponse(user) {
+  return {
+    username: user.username,
+    profileImage: await getImageSignedUrl(user),
+    createdAt: user.createdAt,
+  };
+}
+
+export async function formatFullUserResponse(user) {
   return {
     id: user.id,
     username: user.username,
     email: user.email,
-    profileImage: user.profileImage,
+    profileImage: await getImageSignedUrl(user),
     isAdmin: user.isAdmin,
     createdAt: user.createdAt,
   };

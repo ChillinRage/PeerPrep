@@ -1,6 +1,9 @@
 import bcrypt from "bcrypt";
+import "dotenv/config";
 import { Storage } from "@google-cloud/storage";
-import { DEFAULT_IMAGE_URL } from "../model/user-model.js";
+
+const storage = new Storage({projectId: process.env.IMAGE_PROJECT_ID});
+const bucket = storage.bucket(process.env.IMAGE_BUCKET);
 
 export async function handleExistingUser(username, email) {
   const existingUser = await _findUserByUsernameOrEmail(username, email);
@@ -17,25 +20,37 @@ export function hashPassword(password) {
   return password;
 }
 
-export async function replaceProfileImage(userId, newImage, oldImage) {
+export async function replaceProfileImage(user, newImage) {
   if (!newImage) {
     return newImage;
   }
 
-  const storage = new Storage({projectId: 'peerprep-userservice-436407'});
-  const bucket = storage.bucket('peerprep_userimages');
+  const newImageExtension = newImage.split(".").pop();
+  const newDestinationPath = `${user.id}.${newImageExtension}`;
 
-  const newImageName = newImage.split("\\").pop();
-  const newDestinationPath = `${userId}/${newImageName}`;
-  const oldDestinationPath = `${userId}/${oldImage}`;
+  if (user.profileImage) {
+    await bucket.file(`${user.id}.${user.profileImage}`).delete();
+  }
 
   await bucket.upload(newImage, {
     destination: newDestinationPath,
   });
 
-  if (oldImage !== DEFAULT_IMAGE_URL && oldImage !== newImageName) {
-    await bucket.file(oldDestinationPath).delete();
+  return newImageExtension;
+}
+
+export async function getImageSignedUrl(user) {
+  const signedUrlOptions = {
+    version: 'v4',
+    action: 'read',
+    expires: Date.now() + 3600000, // TTL 60 minutes
+  };
+
+  if (!user.profileImage) {
+    return '';
   }
 
-  return newImageName;
+  const fileName = `${user.id}.${user.profileImage}`;
+  const [url] = await bucket.file(fileName).getSignedUrl(signedUrlOptions);
+  return url;
 }
