@@ -62,7 +62,7 @@
     
         - Admin users: Can retrieve any user's data. The server verifies the user associated with the JWT token is an admin user and allows access to the requested user's data.
           
-        - Non-admin users: Can only retrieve their own data. The server checks if the user ID in the request URL matches the ID of the user associated with the JWT token. If it matches, the server returns the user's own data.
+        - Non-admin users: Can only retrieve their own data, or non-sensitive data of other users. The server checks if the user ID in the request URL matches the ID of the user associated with the JWT token. If it matches, the server returns the user's own data. Otherwise, it returns the other user's username and profile image.
     
 - Responses:
 
@@ -212,11 +212,18 @@
 - HTTP Method: `POST`
 - Endpoint: http://localhost:3001/auth/login
 - Body
-  - Required: `email` (string), `password` (string)
+  - Required: one of `username` (string) or `email` (string), and `password` (string)
 
     ```json
     {
       "email": "sample@gmail.com",
+      "password": "SecurePassword"
+    }
+    ```
+    or
+    ```json
+    {
+      "username": "sampleName",
       "password": "SecurePassword"
     }
     ```
@@ -226,7 +233,7 @@
     | Response Code               | Explanation                                        |
     |-----------------------------|----------------------------------------------------|
     | 200 (OK)                    | Login successful, JWT token and user data returned |
-    | 400 (Bad Request)           | Missing fields                                     |
+    | 400 (Bad Request)           | Missing fields or provided both email and username |
     | 401 (Unauthorized)          | Incorrect email or password                        |
     | 500 (Internal Server Error) | Database or server error                           |
 
