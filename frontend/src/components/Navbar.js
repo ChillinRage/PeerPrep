@@ -85,7 +85,7 @@ export default function Navbar() {
                 <Link to="/history" style={getLinkStyle('/history')}>History</Link>
             </Button>
             <Button color="inherit" sx={{ ...navLinkStyle }}>
-                <Link to="/problems" style={getLinkStyle('/problems')}>Problems</Link>
+                <Link to="/questions" style={getLinkStyle('/questions')}>Questions</Link>
             </Button>
         </Box>
 

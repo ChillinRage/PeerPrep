@@ -8,6 +8,8 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
+import { Button } from '@mui/material';
+import QuestionDialog from './QuestionDialog';
 import questionService from '../services/question-service';
 
 const columns = [
@@ -33,6 +35,8 @@ export default function QuestionTable() {
 
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true); // Loading state
+  const [open, setOpen] = useState(false);
+  const [selectedQuestion, setSelectedQuestion] = useState(null);
 
   // Fetch questions from backend when component mounts
   useEffect(() => {
@@ -48,6 +52,16 @@ export default function QuestionTable() {
       };
       fetchQuestions(); // Trigger the fetch
   }, []);
+
+  const handleQuestionClick = (question) => {
+    setSelectedQuestion(question); 
+    setOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpen(false);
+    setSelectedQuestion(null);
+  };
 
   return (
     <Paper sx={{ maxHeight: 440, maxWidth: '1200px', margin: 'auto' }}>
@@ -75,7 +89,30 @@ export default function QuestionTable() {
                 return (
                   <TableRow hover role="checkbox" tabIndex={-1} key={row.code} style={{ backgroundColor: isEvenRow ? '#EBEBEB' : '#F7F7F7' }}>
                     <TableCell style={{color: 'black', fontSize: 20, fontFamily: 'Poppins', fontWeight: '600', wordWrap: 'break-word'}}>{rowIndex}</TableCell>
-                    <TableCell style={{color: 'black', fontSize: 20, fontFamily: 'Poppins', fontWeight: '600', wordWrap: 'break-word'}}>{row.title}</TableCell>
+                    
+                    <TableCell>
+                      <Button 
+                        color="primary" 
+                        onClick={() => handleQuestionClick(row)}
+                        disableRipple
+                        sx={{
+                          fontSize: '20px', 
+                          fontFamily: 'Poppins', 
+                          fontWeight: '600',
+                          textTransform: 'none',
+                          textDecoration: 'underline',
+                          color: '#41AFFF',
+                          padding: 0,
+                          minWidth: 0,
+                          '&:hover': {
+                            backgroundColor: 'transparent',
+                            textDecoration: 'underline',
+                          }
+                        }}>
+                        {row.title}
+                      </Button>
+                    </TableCell>
+
                     <TableCell style={{color: 'black', fontSize: 20, fontFamily: 'Poppins', fontWeight: '600', wordWrap: 'break-word'}}>{row.difficulty}</TableCell>
                     <TableCell style={{color: 'black', fontSize: 20, fontFamily: 'Poppins', fontWeight: '600', wordWrap: 'break-word'}}>{row.topic.join(', ')}</TableCell>
                     <TableCell style={{color: 'black', fontSize: 20, fontFamily: 'Poppins', fontWeight: '600', wordWrap: 'break-word'}}>New</TableCell>
@@ -94,6 +131,14 @@ export default function QuestionTable() {
         onPageChange={handleChangePage}
         onRowsPerPageChange={handleChangeRowsPerPage}
       />
+
+      {selectedQuestion && (
+        <QuestionDialog 
+          open={open}
+          question={selectedQuestion} 
+          onClose={handleCloseDialog} 
+        />
+      )}
     </Paper>
   );
 }

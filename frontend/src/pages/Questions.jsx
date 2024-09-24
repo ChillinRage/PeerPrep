@@ -1,16 +1,16 @@
 import Navbar from "../components/Navbar";
-import QuestionTable from '../components/question-table'
-import '../styles/Problems.css';
+import QuestionTable from '../components/QuestionTable'
+import '../styles/questions.css';
 
-const Problems = () => {
+const Questions = () => {
     return (
         <div>
         <Navbar />
-        <h1>Problems</h1>
+        <h1>Questions</h1>
         <p className="description">View all the questions stored in database.</p>
         <QuestionTable />
         </div>
     );
 }
 
-export default Problems;
+export default Questions;

@@ -1,2 +1,2 @@
 export {default as Home} from './Home';
-export {default as Problems} from './Problems';
+export {default as Questions} from './Questions';
