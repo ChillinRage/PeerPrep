@@ -19,7 +19,7 @@ app.listen(QUESTION_PORT, () => {
 // Middleware
 app.use(
   cors({
-    origin: ["http://localhost:4000"],
+    origin: ["http://localhost:4000", "http://localhost:3000"],
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
