@@ -1,5 +1,5 @@
 import Navbar from "../components/Navbar";
-import QuestionTable from '../components/question-table'
+import QuestionTable from '../components/QuestionTable'
 import '../styles/Problems.css';
 
 const Problems = () => {
