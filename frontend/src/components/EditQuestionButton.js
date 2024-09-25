@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Button } from '@mui/material';
 import EditQuestion from './EditQuestionDialog';
 
-const EditButton = () => {
+const EditButton = ({question}) => {
     const [open, setOpen] = useState(false);
 
     const handleClickOpen = () => {
@@ -30,7 +30,10 @@ const EditButton = () => {
             >
                 Edit
             </Button>
-            
+            <EditQuestion 
+                open={open} 
+                handleClose={handleClose} 
+                question={question}/>
         </div>
     );
 }

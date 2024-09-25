@@ -3,7 +3,7 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, IconButton, 
 import EditButton from './EditQuestionButton';
 import CloseIcon from '@mui/icons-material/Close';
 import ReactMarkdown from 'react-markdown';
-import DeleteButton from "./DeleteQuestionButton";
+import DeleteQuestion from "./DeleteQuestionDialog";
 
 const QuestionDialog = ({ open, question, onClose }) => {
     if (!question) return null;  // If no problem is selected, return null
@@ -69,8 +69,8 @@ const QuestionDialog = ({ open, question, onClose }) => {
             </DialogContent>
 
             <DialogActions sx={{ justifyContent: 'flex-end', padding: '16px',  backgroundColor:'#D9D9D9' }}>
-                <EditButton/>
-                <DeleteButton/>
+                <EditButton question={question}/>
+                <DeleteQuestion question={question}/>
             </DialogActions>
         </Dialog>
     );
