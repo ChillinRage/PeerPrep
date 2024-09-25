@@ -1,6 +1,6 @@
 import Navbar from "../components/Navbar";
 import QuestionTable from '../components/QuestionTable'
-import AdminButtons from '../components/AdminButtons'
+import AddQuestionButton from '../components/AddQuestionButtons'
 import '../styles/questions.css';
 
 const Questions = () => {
@@ -11,7 +11,7 @@ const Questions = () => {
         <p className="description">View all the questions stored in database.</p>
         <div className="question-table-container">
             <div className="admin-button">
-                <AdminButtons />
+                <AddQuestionButton/>
             </div>
             <QuestionTable />
         </div>

@@ -1,22 +1,13 @@
 import * as React from 'react';
 import { Button, TextField, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem } from '@mui/material';
 import questionService from '../services/question-service';
-import '../styles/CreateQuestion.css';
+import '../styles/create-question-dialog.css';
 
 
 const difficulty_lvl = [
-  {
-    value: 'Easy',
-    label: 'Easy',
-  },
-  {
-    value: 'Medium',
-    label: 'Medium',
-  },
-  {
-    value: 'Hard',
-    label: 'Hard',
-  }
+  { value: 'Easy', label: 'Easy' },
+  { value: 'Medium', label: 'Medium' },
+  { value: 'Hard', label: 'Hard' }
 ];
 
 const CreateQuestion = ({ open, handleClose }) => {
@@ -56,7 +47,7 @@ const CreateQuestion = ({ open, handleClose }) => {
               Add New Question
             </DialogTitle>
             <form onSubmit={handleSubmit}>
-                <DialogContent className="dialog-content">
+                <DialogContent>
                     <TextField
                         autoFocus
                         required

@@ -1,9 +1,9 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { Button } from '@mui/material';
-import CreateQuestion from './CreateQuestion';
+import CreateQuestion from './CreateQuestionDialog';
 
-const AdminButtons = () => {
+const AddQuestionButton = () => {
     const [open, setOpen] = useState(false);
 
     const handleClickOpen = () => {
@@ -38,8 +38,6 @@ const AdminButtons = () => {
             >
                 Add Question
             </Button>
-
-            {/* Dialog component */}
             <CreateQuestion 
                 open={open} 
                 handleClose={handleClose} />
@@ -47,4 +45,4 @@ const AdminButtons = () => {
     );
 }
 
-export default AdminButtons;
+export default AddQuestionButton;
