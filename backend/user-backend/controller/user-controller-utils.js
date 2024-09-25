@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import "dotenv/config";
 import { Storage } from "@google-cloud/storage";
+import { DEFAULT_IMAGE } from "../model/user-model";
 
 const storage = new Storage({projectId: process.env.IMAGE_PROJECT_ID});
 const bucket = storage.bucket(process.env.IMAGE_BUCKET);
@@ -28,7 +29,7 @@ export async function replaceProfileImage(user, newImage) {
   const newImageExtension = newImage.split(".").pop();
   const newDestinationPath = `${user.id}.${newImageExtension}`;
 
-  if (user.profileImage) {
+  if (user.profileImage !== DEFAULT_IMAGE) {
     await bucket.file(`${user.id}.${user.profileImage}`).delete();
   }
 
@@ -46,7 +47,7 @@ export async function getImageSignedUrl(user) {
     expires: Date.now() + 3600000, // TTL 60 minutes
   };
 
-  if (!user.profileImage) {
+  if (user.profileImage === DEFAULT_IMAGE) {
     return '';
   }
 
