@@ -19,4 +19,16 @@ h1 {
     margin-left: 80px;
     margin-top: -10px;
     word-wrap: break-word;
-  }
+}
+
+.question-table-container {
+    position: relative;
+    max-width: 1200px;
+    margin: auto;
+}
+
+.admin-button {
+    position: absolute;
+    top: -80px; /* Adjust as needed */
+    right: 0;
+}
