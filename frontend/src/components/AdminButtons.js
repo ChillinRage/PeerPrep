@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useState } from 'react';
 import { Button } from '@mui/material';
 import CreateQuestion from './CreateQuestion';
 
@@ -39,7 +40,9 @@ const AdminButtons = () => {
             </Button>
 
             {/* Dialog component */}
-            <CreateQuestion open={open} handleClose={handleClose} />
+            <CreateQuestion 
+                open={open} 
+                handleClose={handleClose} />
         </div>
     );
 }
