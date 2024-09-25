@@ -96,6 +96,7 @@ export default function QuestionTable() {
                           color: '#41AFFF',
                           padding: 0,
                           minWidth: 0,
+                          textAlign: 'left',
                           '&:hover': {
                             backgroundColor: 'transparent',
                             textDecoration: 'underline',

@@ -1,6 +1,8 @@
 import * as React from 'react';
 import { Button, TextField, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem } from '@mui/material';
-import '../styles/CreateQuestion.css'; // Ensure this CSS file is imported
+import questionService from '../services/question-service';
+import '../styles/CreateQuestion.css';
+
 
 const difficulty_lvl = [
   {
@@ -17,18 +19,35 @@ const difficulty_lvl = [
   }
 ];
 
-
 const CreateQuestion = ({ open, handleClose }) => {
     const [difficulty, setDifficulty] = React.useState('Easy'); // Default difficulty
 
-    const handleDifficultyChange = (level) => {
-        setDifficulty(level);
+    const handleDifficultyChange = (event) => {
+        setDifficulty(event.target.value);
     };
 
-    const handleSubmit = (event) => {
+    const handleSubmit = async (event) => {
         event.preventDefault();
-        // Handle form submission logic here
-        handleClose(); // Close the dialog after submission
+        
+        const formData = new FormData(event.currentTarget);
+        const question = {
+            title: formData.get('title'),
+            description: formData.get('description'),
+            topic: formData.get('topic').split(',').map(topic => topic.trim()), // Convert to array
+            difficulty: difficulty,
+            input: formData.get('input'),
+            expected_output: formData.get('expected_output'),
+            images: formData.get('images'),
+            leetcode_link: formData.get('leetcode_link'),
+        };
+
+        try {
+            await questionService.createQuestion(question); // Call the createQuestion function
+            window.location.reload();
+            handleClose(); // Close the dialog after submission
+        } catch (error) {
+            console.error('Error creating question:', error); // Handle the error appropriately
+        }
     };
 
     return (
@@ -52,6 +71,7 @@ const CreateQuestion = ({ open, handleClose }) => {
                     />
                     <TextField
                         margin="dense"
+                        required
                         id="description"
                         name="description"
                         label="Description"
@@ -63,8 +83,9 @@ const CreateQuestion = ({ open, handleClose }) => {
                     />
                     <TextField
                         margin="dense"
-                        id="topics"
-                        name="topics"
+                        required
+                        id="topic"
+                        name="topic"
                         label="Topics (comma separated)"
                         type="text"
                         fullWidth
@@ -78,17 +99,19 @@ const CreateQuestion = ({ open, handleClose }) => {
                         select
                         label="Difficulty Level"
                         defaultValue="Easy"
+                        onChange={handleDifficultyChange}
                         helperText="Select the difficulty level"
                         className="text-field"
                       >
                         {difficulty_lvl.map((option) => (
-                          <MenuItem key={option.value} value={option.value}>
-                            {option.label}
-                          </MenuItem>
+                            <MenuItem key={option.value} value={option.value}>
+                                {option.label}
+                            </MenuItem>
                         ))}
                     </TextField>
                     <TextField
                         margin="dense"
+                        required
                         id="input"
                         name="input"
                         label="Input"
@@ -99,8 +122,9 @@ const CreateQuestion = ({ open, handleClose }) => {
                     />
                     <TextField
                         margin="dense"
-                        id="expectedOutput"
-                        name="expectedOutput"
+                        required
+                        id="expected_output"
+                        name="expected_output"
                         label="Expected Output"
                         type="text"
                         fullWidth
