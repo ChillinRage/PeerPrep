@@ -1,10 +1,10 @@
 .dialog-title {
-    font-family: 'Poppins';
-    font-size: 28px;
-    font-weight: 1000;
+    font-family: 'Poppins' !important;
+    font-size: 30px !important;
+    font-weight: 1000 !important;
     color: black;
     text-align: center;
-    padding-bottom: 0;
+    padding-bottom: 0 !important;
 }
 
 .text-field .MuiOutlinedInput-root .MuiOutlinedInput-input {
@@ -23,7 +23,7 @@
 
 .dialog-actions {
     font-family: 'Poppins';
-    font-size: 16px;
-    font-weight: 600;
-    color: rgb(67, 139, 247);
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    color: rgb(67, 139, 247) !important;
 }

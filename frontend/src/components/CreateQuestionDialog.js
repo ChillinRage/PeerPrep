@@ -28,7 +28,7 @@ const CreateQuestion = ({ open, handleClose }) => {
             difficulty: difficulty,
             input: formData.get('input'),
             expected_output: formData.get('expected_output'),
-            images: formData.get('images'),
+            images: formData.get('images').split(',').map(images => images.trim()), // Convert to array
             leetcode_link: formData.get('leetcode_link'),
         };
 
@@ -126,7 +126,7 @@ const CreateQuestion = ({ open, handleClose }) => {
                         margin="dense"
                         id="images"
                         name="images"
-                        label="Images (URLs)"
+                        label="Images URLs (comma separated)"
                         type="text"
                         fullWidth
                         multiline
