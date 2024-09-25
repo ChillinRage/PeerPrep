@@ -61,8 +61,8 @@ export default function Navbar() {
       });
   
     return (
-    <AppBar position="sticky" sx={{ top: 0, backgroundColor: '#61c0f8', zIndex: 999 }}>
-        <Toolbar sx={{ justifyContent: 'center', padding: '10px' }}>
+    <AppBar position="sticky" sx={{ top: 0, backgroundColor: '#61c0f8', zIndex: 999, maxHeight: 75 }}>
+        <Toolbar sx={{ justifyContent: 'center' }}>
         
         <Box sx={{
             left: '10px',
@@ -94,7 +94,7 @@ export default function Navbar() {
                 variant="contained"
                 sx={{
                     width: '126px',
-                    height: '54px',
+                    height: '45px',
                     flexShrink: 0,
                     backgroundColor: '#8576FF', 
                     fontFamily: 'Poppins', 
