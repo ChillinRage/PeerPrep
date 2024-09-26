@@ -1,6 +1,5 @@
 import { Storage } from '@google-cloud/storage';
 import path from 'path';
-import { v4 as uuidv4 } from 'uuid';
 import dotenv from 'dotenv';
 dotenv.config();
 
@@ -8,8 +7,13 @@ const { IMAGE_PROJECT_ID, IMAGE_BUCKET } = process.env;
 const storage = new Storage({projectId: IMAGE_PROJECT_ID});
 const bucket = storage.bucket(IMAGE_BUCKET);
 
+async function generateNewVersion(questionId) {
+    const [files] = await bucket.getFiles({ prefix: `${questionId}-` });
+    return files.length + 1;
+}
+
 export const uploadImage = async (questionId, file) => {
-    const fileName = `${questionId}-${uuidv4()}${path.extname(file.originalname)}`;
+    const fileName = `${questionId}-${await generateNewVersion(questionId)}${path.extname(file.originalname)}`;
     const blob = bucket.file(fileName);
 
     const blobStream = blob.createWriteStream({
@@ -35,7 +39,7 @@ export const uploadImage = async (questionId, file) => {
 };
 
 export const deleteImage = async (imageUrl) => {
-    const fileName = new URL(imageUrl).pathname.split('/').pop();
+    const fileName = imageUrl.split('?')[0].split('/').pop();
     const file = bucket.file(fileName);
 
     try {

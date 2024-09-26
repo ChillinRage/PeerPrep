@@ -7,6 +7,44 @@ import multer from 'multer';
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
+function validateQuestionFields(req, res) {
+    let { title, description, topic, difficulty, input, expected_output, leetcode_link } = req.body;
+
+    title = title.trim();
+    description = description.trim();
+    difficulty = difficulty.trim();
+    leetcode_link = leetcode_link ? leetcode_link.trim() : "";
+
+    // Check if topic is an array and trim each element
+    if (Array.isArray(topic)) {
+        topic = topic.map(t => t.trim());
+    } else if (typeof topic === 'string') {
+        topic = [topic.trim()];
+    } else {
+        return res.status(400).json({ message: "Topic must be an array of strings or a single string" });
+    }
+
+    // Check if all required fields are provided
+    if (!title || !description || !topic.length || !difficulty || !input || !expected_output) {
+        return res.status(400).json({ message: "All fields are required" });
+    }
+
+    return { title, description, topic, difficulty, input, expected_output, leetcode_link };
+}
+
+async function checkExistingQuestion(title) {
+    return await Question.findOne({ title });
+}
+
+async function saveNewQuestion(newQuestion, res) {
+    try {
+        await newQuestion.save();
+        res.status(201).json(newQuestion);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+}
+
 async function handleImageUploads(questionId, imageFiles) {
     const uploadedImages = [];
     // Handle image files
@@ -18,63 +56,57 @@ async function handleImageUploads(questionId, imageFiles) {
     return uploadedImages;
 }
 
+async function handleImages(images, imageFiles, questionId) {
+    let allImages = [];
+
+    if (!imageFiles || imageFiles.length === 0) {
+        // If don't have image files, just use image urls
+        if (images.length > 0) {
+            allImages.push(...images);
+        }
+    } else {
+        // If don't have image urls, just use image files
+        if (images.length === 0) {
+            const uploadedImages = await handleImageUploads(questionId, imageFiles);
+            allImages.push(...uploadedImages);
+        } else {
+            // If have both image files and image urls, use both
+            const uploadedImages = await handleImageUploads(questionId, imageFiles);
+            allImages.push(...images, ...uploadedImages);
+        }
+    }
+
+    return allImages.filter(image => image.trim() !== '');
+}
+
+async function deleteOldImages(question, allImages) {
+    const oldImages = question.images.filter(image => !allImages.includes(image));
+    for (const imageUrl of oldImages) {
+        if (imageUrl.includes('storage.googleapis.com')) {
+            await deleteImage(imageUrl);
+        }
+    }
+}
+
 // Create a new question
 export const createQuestion = [
-    upload.array('imageFiles'), // Middleware to handle file uploads
+    upload.array('imageFiles'),
     async (req, res) => {
-        let { title, description, topic, difficulty, input, expected_output, images, leetcode_link } = req.body;
+        const validation = validateQuestionFields(req, res);
+        if (!validation) return;
+        const { title, description, topic, difficulty, input, expected_output, leetcode_link } = validation;
+        
         const imageFiles = req.files;
-
-        // Ensure images is an array
+        let { images } = req.body;
         images = images ? (Array.isArray(images) ? images : [images]) : [];
 
-        title = title.trim();
-        description = description.trim();
-        difficulty = difficulty.trim();
-        leetcode_link = leetcode_link ? leetcode_link.trim() : "";
-        
-        // Check if topic is an array and trim each element
-        if (Array.isArray(topic)) {
-            topic = topic.map(t => t.trim());
-        } else if (typeof topic === 'string') {
-            topic = [topic.trim()];
-        } else {
-            return res.status(400).json({ message: "Topic must be an array of strings or a single string" });
-        }
-
-        // Check if all required fields are provided
-        if (!title || !description || !topic.length || !difficulty || !input || !expected_output) {
-            return res.status(400).json({ message: "All fields are required" });
-        }
-
-        // Check if the question already exists
-        const existingQuestion = await Question.findOne({ title });
+        const existingQuestion = await checkExistingQuestion(title);
         if (existingQuestion) {
             return res.status(400).json({ message: "A question with this title already exists" });
         }
 
-        // Handle image uploads
         const questionId = new mongoose.Types.ObjectId();
-        let allImages = [];
-        
-        if (!imageFiles || imageFiles.length === 0) {
-            // If don't have image files, just use image urls
-            if (images.length > 0) {
-                allImages.push(...images);
-            }
-        } else {
-            // If don't have image urls, just use image files
-            if (images.length === 0) {
-                const uploadedImages = await handleImageUploads(questionId, imageFiles);
-                allImages.push(...uploadedImages);
-            } else {
-                // If have both image files and image urls, use both
-                const uploadedImages = await handleImageUploads(questionId, imageFiles);
-                allImages.push(...images, ...uploadedImages);
-            }
-        }
-
-        allImages = allImages.filter(image => image.trim() !== '');
+        const allImages = await handleImages(images, imageFiles, questionId);
 
         const newQuestion = new Question({
             _id: questionId,
@@ -88,12 +120,7 @@ export const createQuestion = [
             leetcode_link: leetcode_link || ""
         });
 
-        try {
-            await newQuestion.save();
-            res.status(201).json(newQuestion);
-        } catch (error) {
-            res.status(400).json({ message: error.message });
-        }
+        await saveNewQuestion(newQuestion, res);
     }
 ];
 
@@ -122,10 +149,10 @@ export const deleteQuestion = async (req, res) => {
 
 // Update a question
 export const updateQuestion = [
-    upload.array('imageFiles'), // Middleware to handle file uploads
+    upload.array('imageFiles'),
     async (req, res) => {
         const { id } = req.params;
-        let { images } = req.body; // Change const to let
+        let { images } = req.body;
         const imageFiles = req.files;
 
         try {
@@ -134,40 +161,10 @@ export const updateQuestion = [
                 return res.status(404).json({ message: "Question not found" });
             }
 
-            // Ensure images is an array
             images = images ? (Array.isArray(images) ? images : [images]) : [];
+            const allImages = await handleImages(images, imageFiles, id);
+            await deleteOldImages(question, allImages);
 
-            // Handle image uploads
-            let allImages = [];
-
-            if (!imageFiles || imageFiles.length === 0) {
-                // If don't have image files, just use image urls
-                if (images.length > 0) {
-                    allImages.push(...images);
-                }
-            } else {
-                // If don't have image urls, just use image files
-                if (images.length === 0) {
-                    const uploadedImages = await handleImageUploads(id, imageFiles);
-                    allImages.push(...uploadedImages);
-                } else {
-                    // If have both image files and image urls, use both
-                    const uploadedImages = await handleImageUploads(id, imageFiles);
-                    allImages.push(...images, ...uploadedImages);
-                }
-            }
-
-            allImages = allImages.filter(image => image.trim() !== '');
-
-            // Delete old images that are no longer needed from Google Cloud Storage
-            const oldImages = question.images.filter(image => !allImages.includes(image));
-            for (const imageUrl of oldImages) {
-                if (imageUrl.includes('storage.googleapis.com')) {
-                    await deleteImage(imageUrl);
-                }
-            }
-
-            // Update the question
             const updatedQuestion = await Question.findByIdAndUpdate(id, { $set: { ...req.body, images: allImages } }, { new: true });
             if (!updatedQuestion) {
                 return res.status(404).json({ message: "Question not found" });
