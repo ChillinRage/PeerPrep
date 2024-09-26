@@ -20,16 +20,22 @@ const EditQuestion = ({ open, handleClose, question }) => {
       images: question?.images?.join(', ') || '', // Assuming images is an array, convert to comma-separated string
       leetcode_link: question?.leetcode_link || ''
     });
-  
+
+    const [imageFiles, setImageFiles] = React.useState([]);
+
     const handleInputChange = (event) => {
       const { name, value } = event.target;
       setQuestionData({ ...questionData, [name]: value });
     };
-  
+
     const handleDifficultyChange = (event) => {
       setQuestionData({ ...questionData, difficulty: event.target.value });
     };
-  
+
+    const handleImageFilesChange = (event) => {
+      setImageFiles(event.target.files);
+    };
+
     const handleSubmit = async (event) => {
       event.preventDefault();
       const updatedQuestionData = {
@@ -37,16 +43,25 @@ const EditQuestion = ({ open, handleClose, question }) => {
         topic: questionData.topic.split(',').map((t) => t.trim()), // Convert topics back to array
         images: questionData.images.split(',').map((img) => img.trim()) // Convert images back to array
       };
-  
+
+      const formData = new FormData();
+      for (const key in updatedQuestionData) {
+        formData.append(key, updatedQuestionData[key]);
+      }
+
+      for (let i = 0; i < imageFiles.length; i++) {
+        formData.append('imageFiles', imageFiles[i]);
+      }
+
       try {
-        await questionService.updateQuestion(question._id, updatedQuestionData); // Assuming updateQuestion handles the API request for updating
+        await questionService.updateQuestion(question._id, formData); // Assuming updateQuestion handles the API request for updating
         window.location.reload(); // Refresh the page after the update
         handleClose();
       } catch (error) {
         console.error('Error updating question:', error);
       }
     };
-  
+
     return (
       <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
         <DialogTitle className="dialog-title">Edit Question</DialogTitle>
@@ -160,6 +175,15 @@ const EditQuestion = ({ open, handleClose, question }) => {
               onChange={handleInputChange}
               className="text-field"
             />
+            <input
+              type="file"
+              id="imageFiles"
+              name="imageFiles"
+              multiple
+              accept="image/jpeg, image/jpg, image/png"
+              onChange={handleImageFilesChange}
+              className="file-input"
+            />
           </DialogContent>
           <DialogActions>
             <Button onClick={handleClose} className="dialog-actions">Cancel</Button>
@@ -169,5 +193,5 @@ const EditQuestion = ({ open, handleClose, question }) => {
       </Dialog>
     );
   };
-  
-  export default EditQuestion;
+
+export default EditQuestion;

@@ -3,9 +3,13 @@ import axios from 'axios';
 const BASE_URL = 'http://localhost:4000/api/questions';
 
 // Create question
-const createQuestion = async (question) => {
+const createQuestion = async (formData) => {
     try {
-        const response = await axios.post(BASE_URL, question);
+        const response = await axios.post(BASE_URL, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
         return response.data;
     } catch (error) {
         console.error('Error creating question:', error);
@@ -14,9 +18,13 @@ const createQuestion = async (question) => {
 }
 
 // Update question
-const updateQuestion = async (id, question) => {
+const updateQuestion = async (id, formData) => {
     try {
-        const response = await axios.put(`${BASE_URL}/${id}`, question);
+        const response = await axios.put(`${BASE_URL}/${id}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        });
         return response.data;
     } catch (error) {
         console.error('Error updating question:', error);

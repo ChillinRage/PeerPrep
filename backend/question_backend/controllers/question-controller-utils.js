@@ -1,62 +1,46 @@
 import { Storage } from '@google-cloud/storage';
+import path from 'path';
+import { v4 as uuidv4 } from 'uuid';
 import dotenv from 'dotenv';
-
 dotenv.config();
 
-const { IMAGE_BUCKET } = process.env;
-const storage = new Storage();
+const { IMAGE_PROJECT_ID, IMAGE_BUCKET } = process.env;
+const storage = new Storage({projectId: IMAGE_PROJECT_ID});
 const bucket = storage.bucket(IMAGE_BUCKET);
 
-export const uploadImage = async (questionId, image) => {
-    try {
-        const imageFileName = `${questionId}-${Date.now()}.${image.originalname.split('.').pop()}`;
-        const file = bucket.file(imageFileName);
-        const stream = file.createWriteStream({
-            metadata: {
-                contentType: image.mimetype,
-            },
-        });
+export const uploadImage = async (questionId, file) => {
+    const fileName = `${questionId}-${uuidv4()}${path.extname(file.originalname)}`;
+    const blob = bucket.file(fileName);
 
-        stream.on('error', (error) => {
-            console.error('Error uploading image: ', error);
-            throw error;
-        });
+    const blobStream = blob.createWriteStream({
+        resumable: false,
+        contentType: file.mimetype,
+    });
 
-        stream.on('finish', async () => {
-            await file.makePublic();
-            const publicUrl = `https://storage.googleapis.com/${IMAGE_BUCKET}/${imageFileName}`;
-            console.log('Image uploaded successfully: ', publicUrl);
-            return publicUrl;
-        });
-
-        stream.end(image.buffer);
-    } catch (error) {
-        console.error('Error: ', error);
-        throw error;
-    }
+    return new Promise((resolve, reject) => {
+        blobStream.on('finish', async () => {
+            try {
+                const [url] = await blob.getSignedUrl({
+                    action: 'read',
+                    expires: '03-01-2500', // Set an appropriate expiration date
+                });
+                resolve(url);
+            } catch (error) {
+                reject(error);
+            }
+        }).on('error', (err) => {
+            reject(err);
+        }).end(file.buffer);
+    });
 };
 
-export const deleteImage = async (questionId, imageUrl) => {
+export const deleteImage = async (imageUrl) => {
+    const fileName = new URL(imageUrl).pathname.split('/').pop();
+    const file = bucket.file(fileName);
+
     try {
-        // Extract image name from URL
-        const imageFileName = imageUrl.split('/').pop();
-
-        // Delete image from Google Cloud Storage
-        const fileToDelete = bucket.file(imageFileName);
-        await fileToDelete.delete();
-        console.log('Image deleted successfully: ', imageUrl);
-
-        // Get all images of the question
-        const [files] = await bucket.getFiles({ prefix: questionId });
-
-        // Rename the remaining images
-        for (let i = 0; i < files.length; i++) {
-            const oldFileName = files[i].name;
-            const newFileName = `${questionId}-${i + 1}.${oldFileName.split('.').pop()}`;
-            // Add renaming logic here if needed
-        }
+        await file.delete();
     } catch (error) {
-        console.error('Error deleting image: ', error);
-        throw error;
+        console.error(`Failed to delete image ${imageUrl}:`, error);
     }
 };

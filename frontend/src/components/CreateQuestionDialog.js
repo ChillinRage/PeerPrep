@@ -3,7 +3,6 @@ import { Button, TextField, Dialog, DialogActions, DialogContent, DialogTitle, M
 import questionService from '../services/question-service';
 import '../styles/create-question-dialog.css';
 
-
 const difficulty_lvl = [
   { value: 'Easy', label: 'Easy' },
   { value: 'Medium', label: 'Medium' },
@@ -12,28 +11,38 @@ const difficulty_lvl = [
 
 const CreateQuestion = ({ open, handleClose }) => {
     const [difficulty, setDifficulty] = React.useState('Easy'); // Default difficulty
+    const [imageFiles, setImageFiles] = React.useState([]); // State to hold image files
 
     const handleDifficultyChange = (event) => {
         setDifficulty(event.target.value);
     };
 
+    const handleImageFilesChange = (event) => {
+        setImageFiles(event.target.files);
+    };
+
     const handleSubmit = async (event) => {
         event.preventDefault();
         
-        const formData = new FormData(event.currentTarget);
-        const question = {
-            title: formData.get('title'),
-            description: formData.get('description'),
-            topic: formData.get('topic').split(',').map(topic => topic.trim()), // Convert to array
-            difficulty: difficulty,
-            input: formData.get('input'),
-            expected_output: formData.get('expected_output'),
-            images: formData.get('images').split(',').map(images => images.trim()), // Convert to array
-            leetcode_link: formData.get('leetcode_link'),
-        };
+        const formData = new FormData();
+        const formElements = event.currentTarget.elements;
+
+        formData.append('title', formElements.title.value);
+        formData.append('description', formElements.description.value);
+        formData.append('topic', formElements.topic.value.split(',').map(topic => topic.trim()));
+        formData.append('difficulty', difficulty);
+        formData.append('input', formElements.input.value);
+        formData.append('expected_output', formElements.expected_output.value);
+        formData.append('images', formElements.images.value.split(',').map(image => image.trim()));
+        formData.append('leetcode_link', formElements.leetcode_link.value);
+
+        // Append image files to formData
+        for (let i = 0; i < imageFiles.length; i++) {
+            formData.append('imageFiles', imageFiles[i]);
+        }
 
         try {
-            await questionService.createQuestion(question); // Call the createQuestion function
+            await questionService.createQuestion(formData); // Call the createQuestion function
             window.location.reload();
             handleClose(); // Close the dialog after submission
         } catch (error) {
@@ -131,6 +140,15 @@ const CreateQuestion = ({ open, handleClose }) => {
                         fullWidth
                         multiline
                         className="text-field"
+                    />
+                    <input
+                        type="file"
+                        id="imageFiles"
+                        name="imageFiles"
+                        multiple
+                        accept="image/jpeg, image/jpg, image/png"
+                        onChange={handleImageFilesChange}
+                        className="file-input"
                     />
                     <TextField
                         margin="dense"
