@@ -1,5 +1,19 @@
 const mongoose = require('mongoose');
 const Question = require('../models/question-model');
+const { uploadImage, deleteImage } = require('./question-controller-utils');
+
+async function handleImageUploads(questionId, images) {
+    const uploadedImages = [];
+    for (const image of images) {
+        if (image.startsWith('http')) {
+            uploadedImages.push(image);
+        } else {
+            const imageUrl = await uploadImage(questionId, image);
+            uploadedImages.push(imageUrl);
+        }
+    }
+    return uploadedImages;
+}
 
 // Create a new question
 module.exports.createQuestion = async (req, res) => {
@@ -28,16 +42,20 @@ module.exports.createQuestion = async (req, res) => {
     if (existingQuestion) {
         return res.status(400).json({ message: "A question with this title already exists" });
     }
+
+    // Handle image uploads
+    const questionId = new mongoose.Types.ObjectId();
+    const uploadedImages = (images && images.length > 0) ? await handleImageUploads(questionId, images) : [];
     
     const newQuestion = new Question({
-        _id: new mongoose.Types.ObjectId(),
+        _id: questionId,
         title,
         description,
         topic,
         difficulty,
         input,
         expected_output,
-        images: images || [],
+        images: uploadedImages,
         leetcode_link: leetcode_link || ""
     });
 
@@ -59,6 +77,13 @@ module.exports.deleteQuestion = async (req, res) => {
             return res.status(404).json({ message: "Question not found" });
         }
 
+        // Delete images from Google Cloud Storage
+        for (const imageUrl of deletedQuestion.images) {
+            if (imageUrl.includes('storage.googleapis.com')) {
+                await deleteImage(id, imageUrl);
+            }
+        }
+
         res.status(200).json(deletedQuestion);
     } catch (error) {
         res.status(400).json({ message: error.message });
@@ -68,9 +93,27 @@ module.exports.deleteQuestion = async (req, res) => {
 // Update a question
 module.exports.updateQuestion = async (req, res) => {
     const { id } = req.params;
+    const { images } = req.body;
 
     try {
-        const updatedQuestion = await Question.findByIdAndUpdate(id, { $set: req.body }, { new: true });
+        const question = await Question.findById(id);
+        if (!question) {
+            return res.status(404).json({ message: "Question not found" });
+        }
+
+        // Handle image uploads
+        const uploadedImages = (images && images.length > 0) ? await handleImageUploads(id, images) : [];
+
+        // Delete old images that are no longer needed from Google Cloud Storage
+        const oldImages = question.images.filter(image => !uploadedImages.includes(image));
+        for (const imageUrl of oldImages) {
+            if (imageUrl.includes('storage.googleapis.com')) {
+                await deleteImage(id, imageUrl);
+            }
+        }
+
+        // Update the question
+        const updatedQuestion = await Question.findByIdAndUpdate(id, { $set: { ...req.body, images: uploadedImages } }, { new: true });
         if (!updatedQuestion) {
             return res.status(404).json({ message: "Question not found" });
         }
