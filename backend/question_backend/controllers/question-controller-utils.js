@@ -1,34 +1,42 @@
-import { Storage } from "@google-cloud/storage";
-require("dotenv").config();
-const { IMAGE_PROJECT_ID, IMAGE_BUCKET } = process.env;
+import { Storage } from '@google-cloud/storage';
+import dotenv from 'dotenv';
 
-const storage = new Storage({projectId: IMAGE_PROJECT_ID});
+dotenv.config();
+
+const { IMAGE_BUCKET } = process.env;
+const storage = new Storage();
 const bucket = storage.bucket(IMAGE_BUCKET);
 
-module.exports.uploadImage = async (questionId, image) => {
+export const uploadImage = async (questionId, image) => {
     try {
-        const imageExtension = image.split('.').pop();
-        const [files] = await bucket.getFiles({ prefix: questionId });
-        const existingImagesCount = files.length;
-        const imageFileName = `${questionId}-${existingImagesCount + 1}.${imageExtension}`;
-
-        // Upload image to Google Cloud Storage
+        const imageFileName = `${questionId}-${Date.now()}.${image.originalname.split('.').pop()}`;
         const file = bucket.file(imageFileName);
-        await file.save(image, { contentType: `image/${imageExtension}` });
+        const stream = file.createWriteStream({
+            metadata: {
+                contentType: image.mimetype,
+            },
+        });
 
-        // Make image public
-        await file.makePublic();
-        const publicUrl = `https://storage.googleapis.com/${IMAGE_BUCKET}/${imageFileName}`;
+        stream.on('error', (error) => {
+            console.error('Error uploading image: ', error);
+            throw error;
+        });
 
-        console.log('Image uploaded successfully: ', publicUrl);
-        return publicUrl;
+        stream.on('finish', async () => {
+            await file.makePublic();
+            const publicUrl = `https://storage.googleapis.com/${IMAGE_BUCKET}/${imageFileName}`;
+            console.log('Image uploaded successfully: ', publicUrl);
+            return publicUrl;
+        });
+
+        stream.end(image.buffer);
     } catch (error) {
         console.error('Error: ', error);
         throw error;
     }
-}
+};
 
-module.exports.deleteImage = async (questionId, imageUrl) => {
+export const deleteImage = async (questionId, imageUrl) => {
     try {
         // Extract image name from URL
         const imageFileName = imageUrl.split('/').pop();
@@ -45,17 +53,10 @@ module.exports.deleteImage = async (questionId, imageUrl) => {
         for (let i = 0; i < files.length; i++) {
             const oldFileName = files[i].name;
             const newFileName = `${questionId}-${i + 1}.${oldFileName.split('.').pop()}`;
-
-            if (oldFileName !== newFileName) {
-                const oldFile = bucket.file(oldFileName);
-                await oldFile.move(newFileName);
-                console.log('Image renamed successfully: ', oldFileName, '->', newFileName);
-            }
+            // Add renaming logic here if needed
         }
-
-        console.log('All images renamed successfully');
     } catch (error) {
-        console.error('Error: ', error);
+        console.error('Error deleting image: ', error);
         throw error;
     }
-}
+};

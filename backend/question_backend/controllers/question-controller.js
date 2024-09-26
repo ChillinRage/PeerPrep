@@ -1,6 +1,6 @@
-const mongoose = require('mongoose');
-const Question = require('../models/question-model');
-const { uploadImage, deleteImage } = require('./question-controller-utils');
+import mongoose from "mongoose";
+import Question from "../models/question-model.js";
+import { uploadImage, deleteImage } from "./question-controller-utils.js";
 
 async function handleImageUploads(questionId, images) {
     const uploadedImages = [];
@@ -16,7 +16,7 @@ async function handleImageUploads(questionId, images) {
 }
 
 // Create a new question
-module.exports.createQuestion = async (req, res) => {
+export const createQuestion = async (req, res) => {
     let { title, description, topic, difficulty, input, expected_output, images, leetcode_link } = req.body;
     title = title.trim();
     description = description.trim();
@@ -68,7 +68,7 @@ module.exports.createQuestion = async (req, res) => {
 }
 
 // Delete a question
-module.exports.deleteQuestion = async (req, res) => {
+export const deleteQuestion = async (req, res) => {
     const { id } = req.params;
 
     try {
@@ -91,7 +91,7 @@ module.exports.deleteQuestion = async (req, res) => {
 }
 
 // Update a question
-module.exports.updateQuestion = async (req, res) => {
+export const updateQuestion = async (req, res) => {
     const { id } = req.params;
     const { images } = req.body;
 
@@ -102,7 +102,7 @@ module.exports.updateQuestion = async (req, res) => {
         }
 
         // Handle image uploads
-        const uploadedImages = (images && images.length > 0) ? await handleImageUploads(id, images) : [];
+        const uploadedImages = images && images.length > 0 ? await handleImageUploads(id, images) : [];
 
         // Delete old images that are no longer needed from Google Cloud Storage
         const oldImages = question.images.filter(image => !uploadedImages.includes(image));
@@ -125,7 +125,7 @@ module.exports.updateQuestion = async (req, res) => {
 }
 
 // Get all questions (with filters)
-module.exports.getAllQuestions = async (req, res) => {
+export const getAllQuestions = async (req, res) => {
     try {
         const { topic, difficulty } = req.query;
         const filter = {};
@@ -146,7 +146,7 @@ module.exports.getAllQuestions = async (req, res) => {
 }
 
 // Get a question by ID
-module.exports.getQuestionById = async (req, res) => {
+export const getQuestionById = async (req, res) => {
     const questionId = req.params.id;
 
     try {
