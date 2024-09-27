@@ -1,19 +1,12 @@
-const { createQuestion, deleteQuestion, updateQuestion, getAllQuestions, getQuestionById } = require('../controllers/question-controller');
-const router = require('express').Router();
+import express from "express";
+import { createQuestion, deleteQuestion, updateQuestion, getAllQuestions, getQuestionById } from "../controllers/question-controller.js";
 
-// Create a question
-router.post('/', createQuestion);
+const router = express.Router();
 
-// Delete a question
-router.delete('/:id', deleteQuestion);
+router.post("/", createQuestion);
+router.delete("/:id", deleteQuestion);
+router.put("/:id", updateQuestion);
+router.get("/", getAllQuestions);
+router.get("/:id", getQuestionById);
 
-// Update a question
-router.put('/:id', updateQuestion);
-
-// Get all questions (with filters)
-router.get('/', getAllQuestions);
-
-// Get a question by ID
-router.get('/:id', getQuestionById);
-
-module.exports = router;
+export default router;

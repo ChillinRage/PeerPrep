@@ -1,0 +1,6 @@
+MONGO_URL = <insert mongodb connection>
+QUESTION_PORT = <insert port number>
+
+GOOGLE_APPLICATION_CREDENTIALS = <google key json>
+IMAGE_PROJECT_ID = <google project id>
+IMAGE_BUCKET = <bucket name>
