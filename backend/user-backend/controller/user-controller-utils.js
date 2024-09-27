@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import "dotenv/config";
 import { Storage } from "@google-cloud/storage";
-import { DEFAULT_IMAGE } from "../model/user-model";
+import { DEFAULT_IMAGE } from "../model/user-model.js";
 
 const storage = new Storage({projectId: process.env.IMAGE_PROJECT_ID});
 const bucket = storage.bucket(process.env.IMAGE_BUCKET);
