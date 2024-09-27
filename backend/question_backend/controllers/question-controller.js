@@ -1,14 +1,20 @@
-const mongoose = require('mongoose');
-const Question = require('../models/question-model');
+import mongoose from "mongoose";
+import Question from "../models/question-model.js";
+import { uploadImage, deleteImage } from "./question-controller-utils.js";
+import multer from 'multer';
 
-// Create a new question
-module.exports.createQuestion = async (req, res) => {
-    let { title, description, topic, difficulty, input, expected_output, images, leetcode_link } = req.body;
+// Configure multer for file uploads
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+function validateQuestionFields(req, res) {
+    let { title, description, topic, difficulty, input, expected_output, leetcode_link } = req.body;
+
     title = title.trim();
     description = description.trim();
     difficulty = difficulty.trim();
     leetcode_link = leetcode_link ? leetcode_link.trim() : "";
-    
+
     // Check if topic is an array and trim each element
     if (Array.isArray(topic)) {
         topic = topic.map(t => t.trim());
@@ -23,34 +29,107 @@ module.exports.createQuestion = async (req, res) => {
         return res.status(400).json({ message: "All fields are required" });
     }
 
-    // Check if the question already exists
-    const existingQuestion = await Question.findOne({ title });
-    if (existingQuestion) {
-        return res.status(400).json({ message: "A question with this title already exists" });
-    }
-    
-    const newQuestion = new Question({
-        _id: new mongoose.Types.ObjectId(),
-        title,
-        description,
-        topic,
-        difficulty,
-        input,
-        expected_output,
-        images: images || [],
-        leetcode_link: leetcode_link || ""
-    });
+    return { title, description, topic, difficulty, input, expected_output, leetcode_link };
+}
 
+async function checkExistingQuestion(title) {
+    return await Question.findOne({ title });
+}
+
+async function saveNewQuestion(newQuestion, res) {
     try {
         await newQuestion.save();
         res.status(201).json(newQuestion);
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        if (error.name === 'ValidationError') {
+            res.status(400).json({ message: error.message });
+        } else {
+            res.status(500).json({ message: "Internal Server Error" });
+        }
     }
 }
 
+async function handleImageUploads(questionId, imageFiles) {
+    const uploadedImages = [];
+    // Handle image files
+    for (const file of imageFiles) {
+        const publicUrl = await uploadImage(questionId, file);
+        uploadedImages.push(publicUrl);
+    }
+
+    return uploadedImages;
+}
+
+async function handleImages(images, imageFiles, questionId) {
+    let allImages = [];
+
+    if (!imageFiles || imageFiles.length === 0) {
+        // If don't have image files, just use image urls
+        if (images.length > 0) {
+            allImages.push(...images);
+        }
+    } else {
+        // If don't have image urls, just use image files
+        if (images.length === 0) {
+            const uploadedImages = await handleImageUploads(questionId, imageFiles);
+            allImages.push(...uploadedImages);
+        } else {
+            // If have both image files and image urls, use both
+            const uploadedImages = await handleImageUploads(questionId, imageFiles);
+            allImages.push(...images, ...uploadedImages);
+        }
+    }
+
+    return allImages.filter(image => image.trim() !== '');
+}
+
+async function deleteOldImages(question, allImages) {
+    const oldImages = question.images.filter(image => !allImages.includes(image));
+    for (const imageUrl of oldImages) {
+        if (imageUrl.includes('storage.googleapis.com')) {
+            await deleteImage(imageUrl);
+        }
+    }
+}
+
+// Create a new question
+export const createQuestion = [
+    upload.array('imageFiles'),
+    async (req, res) => {
+        const validation = validateQuestionFields(req, res);
+        if (!validation) return;
+        const { title, description, topic, difficulty, input, expected_output, leetcode_link } = validation;
+        
+        const imageFiles = req.files;
+        let { images } = req.body;
+        images = images ? (Array.isArray(images) ? images : [images]) : [];
+
+        const existingQuestion = await checkExistingQuestion(title);
+        if (existingQuestion) {
+            return res.status(409).json({ message: "A question with this title already exists" });
+        }
+
+        const questionId = new mongoose.Types.ObjectId();
+        const allImages = await handleImages(images, imageFiles, questionId);
+
+        const newQuestion = new Question({
+            _id: questionId,
+            title,
+            description,
+            topic,
+            difficulty,
+            input,
+            expected_output,
+            images: allImages,
+            leetcode_link: leetcode_link || ""
+        });
+
+        await saveNewQuestion(newQuestion, res);
+    }
+];
+
 // Delete a question
-module.exports.deleteQuestion = async (req, res) => {
+export const deleteQuestion = async (req, res) => {
     const { id } = req.params;
 
     try {
@@ -59,36 +138,72 @@ module.exports.deleteQuestion = async (req, res) => {
             return res.status(404).json({ message: "Question not found" });
         }
 
+        // Delete images from Google Cloud Storage
+        for (const imageUrl of deletedQuestion.images) {
+            if (imageUrl.includes('storage.googleapis.com')) {
+                await deleteImage(imageUrl);
+            }
+        }
+
         res.status(200).json(deletedQuestion);
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        if (error.name === 'CastError') {
+            res.status(400).json({ message: error.message });
+        } else {
+            res.status(500).json({ message: "Internal Server Error" });
+        }
     }
 }
 
 // Update a question
-module.exports.updateQuestion = async (req, res) => {
-    const { id } = req.params;
+export const updateQuestion = [
+    upload.array('imageFiles'),
+    async (req, res) => {
+        const { id } = req.params;
+        let { images, title } = req.body;
+        const imageFiles = req.files;
 
-    try {
-        const updatedQuestion = await Question.findByIdAndUpdate(id, { $set: req.body }, { new: true });
-        if (!updatedQuestion) {
-            return res.status(404).json({ message: "Question not found" });
+        try {
+            const question = await Question.findById(id);
+            if (!question) {
+                return res.status(404).json({ message: "Question not found" });
+            }
+
+            if (title) {
+                const existingQuestion = await checkExistingQuestion(title);
+                if (existingQuestion) {
+                    return res.status(409).json({ message: "A question with this title already exists" });
+                }    
+            }
+
+            images = images ? (Array.isArray(images) ? images : [images]) : [];
+            const allImages = await handleImages(images, imageFiles, id);
+            await deleteOldImages(question, allImages);
+
+            const updatedQuestion = await Question.findByIdAndUpdate(id, { $set: { ...req.body, images: allImages } }, { new: true });
+            if (!updatedQuestion) {
+                return res.status(404).json({ message: "Question not found" });
+            }
+
+            res.status(200).json(updatedQuestion);
+        } catch (error) {
+            if (error.name === 'CastError') {
+                res.status(400).json({ message: error.message });
+            } else {
+                res.status(500).json({ message: "Internal Server Error" });
+            }
         }
-
-        res.status(200).json(updatedQuestion);
-    } catch (error) {
-        res.status(400).json({ message: error.message });
     }
-}
+];
 
 // Get all questions (with filters)
-module.exports.getAllQuestions = async (req, res) => {
+export const getAllQuestions = async (req, res) => {
     try {
         const { topic, difficulty } = req.query;
         const filter = {};
 
         if (topic) {
-            filter.topic = { $in: Array.isArray(topic) ? topic : [topic] };
+            filter.topic = { $all: Array.isArray(topic) ? topic : [topic] };
         }
 
         if (difficulty) {
@@ -98,12 +213,16 @@ module.exports.getAllQuestions = async (req, res) => {
         const questions = await Question.find(filter);
         res.status(200).json(questions);
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        if (error.name === 'CastError') {
+            res.status(400).json({ message: error.message });
+        } else {
+            res.status(500).json({ message: "Internal Server Error" });
+        }
     }
 }
 
 // Get a question by ID
-module.exports.getQuestionById = async (req, res) => {
+export const getQuestionById = async (req, res) => {
     const questionId = req.params.id;
 
     try {
@@ -114,6 +233,10 @@ module.exports.getQuestionById = async (req, res) => {
 
         res.status(200).json(question);
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        if (error.name === 'CastError') {
+            res.status(400).json({ message: error.message });
+        } else {
+            res.status(500).json({ message: "Internal Server Error" });
+        }
     }
 }

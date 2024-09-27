@@ -1,15 +1,19 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-const app = express();
-require("dotenv").config();
+import express from "express";
+import mongoose from "mongoose";
+import cors from "cors";
+import dotenv from "dotenv";
+import questionRoutes from "./routes/question-route.js";
+
+dotenv.config();
+
 const { MONGO_URL, QUESTION_PORT } = process.env;
-const questionRoutes = require("./routes/question-route");
+
+const app = express();
 
 // Connect to MongoDB
 mongoose
   .connect(MONGO_URL)
-  .then(() => console.log("Question Backend: MongoDB is  connected successfully"))
+  .then(() => console.log("Question Backend: MongoDB is connected successfully"))
   .catch((err) => console.error(err));
 
 app.listen(QUESTION_PORT, () => {
