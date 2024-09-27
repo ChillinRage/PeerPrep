@@ -27,13 +27,19 @@ const CreateQuestion = ({ open, handleClose }) => {
         const formData = new FormData();
         const formElements = event.currentTarget.elements;
 
+        // Append each topic individually
+        const topics = formElements.topic.value.split(',').map(topic => topic.trim());
+        topics.forEach(topic => formData.append('topic', topic));
+
+        // Append each image URL individually
+        const images = formElements.images.value.split(',').map(image => image.trim());
+        images.forEach(image => formData.append('images', image));
+
         formData.append('title', formElements.title.value);
         formData.append('description', formElements.description.value);
-        formData.append('topic', formElements.topic.value.split(',').map(topic => topic.trim()));
         formData.append('difficulty', difficulty);
         formData.append('input', formElements.input.value);
         formData.append('expected_output', formElements.expected_output.value);
-        formData.append('images', formElements.images.value.split(',').map(image => image.trim()));
         formData.append('leetcode_link', formElements.leetcode_link.value);
 
         // Append image files to formData

@@ -39,29 +39,33 @@ const EditQuestion = ({ open, handleClose, question }) => {
     const handleSubmit = async (event) => {
       event.preventDefault();
       const updatedQuestionData = {
-        ...questionData,
-        topic: questionData.topic.split(',').map((t) => t.trim()), // Convert topics back to array
-        images: questionData.images.split(',').map((img) => img.trim()) // Convert images back to array
+          ...questionData,
+          topic: questionData.topic.split(',').map((t) => t.trim()), // Convert topics back to array
+          images: questionData.images.split(',').map((img) => img.trim()) // Convert images back to array
       };
-
+  
       const formData = new FormData();
       for (const key in updatedQuestionData) {
-        formData.append(key, updatedQuestionData[key]);
+          if (Array.isArray(updatedQuestionData[key])) {
+              updatedQuestionData[key].forEach(item => formData.append(key, item));
+          } else {
+              formData.append(key, updatedQuestionData[key]);
+          }
       }
-
+  
       for (let i = 0; i < imageFiles.length; i++) {
-        formData.append('imageFiles', imageFiles[i]);
+          formData.append('imageFiles', imageFiles[i]);
       }
-
+  
       try {
-        await questionService.updateQuestion(question._id, formData); // Assuming updateQuestion handles the API request for updating
-        window.location.reload(); // Refresh the page after the update
-        handleClose();
+          await questionService.updateQuestion(question._id, formData); // Assuming updateQuestion handles the API request for updating
+          window.location.reload(); // Refresh the page after the update
+          handleClose();
       } catch (error) {
-        console.error('Error updating question:', error);
+          console.error('Error updating question:', error);
       }
     };
-
+    
     return (
       <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
         <DialogTitle className="dialog-title">Edit Question</DialogTitle>

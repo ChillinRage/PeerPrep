@@ -41,7 +41,11 @@ async function saveNewQuestion(newQuestion, res) {
         await newQuestion.save();
         res.status(201).json(newQuestion);
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        if (error.name === 'ValidationError') {
+            res.status(400).json({ message: error.message });
+        } else {
+            res.status(500).json({ message: "Internal Server Error" });
+        }
     }
 }
 
@@ -102,7 +106,7 @@ export const createQuestion = [
 
         const existingQuestion = await checkExistingQuestion(title);
         if (existingQuestion) {
-            return res.status(400).json({ message: "A question with this title already exists" });
+            return res.status(409).json({ message: "A question with this title already exists" });
         }
 
         const questionId = new mongoose.Types.ObjectId();
@@ -143,7 +147,11 @@ export const deleteQuestion = async (req, res) => {
 
         res.status(200).json(deletedQuestion);
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        if (error.name === 'CastError') {
+            res.status(400).json({ message: error.message });
+        } else {
+            res.status(500).json({ message: "Internal Server Error" });
+        }
     }
 }
 
@@ -152,13 +160,20 @@ export const updateQuestion = [
     upload.array('imageFiles'),
     async (req, res) => {
         const { id } = req.params;
-        let { images } = req.body;
+        let { images, title } = req.body;
         const imageFiles = req.files;
 
         try {
             const question = await Question.findById(id);
             if (!question) {
                 return res.status(404).json({ message: "Question not found" });
+            }
+
+            if (title) {
+                const existingQuestion = await checkExistingQuestion(title);
+                if (existingQuestion) {
+                    return res.status(409).json({ message: "A question with this title already exists" });
+                }    
             }
 
             images = images ? (Array.isArray(images) ? images : [images]) : [];
@@ -172,7 +187,11 @@ export const updateQuestion = [
 
             res.status(200).json(updatedQuestion);
         } catch (error) {
-            res.status(400).json({ message: error.message });
+            if (error.name === 'CastError') {
+                res.status(400).json({ message: error.message });
+            } else {
+                res.status(500).json({ message: "Internal Server Error" });
+            }
         }
     }
 ];
@@ -184,7 +203,7 @@ export const getAllQuestions = async (req, res) => {
         const filter = {};
 
         if (topic) {
-            filter.topic = { $in: Array.isArray(topic) ? topic : [topic] };
+            filter.topic = { $all: Array.isArray(topic) ? topic : [topic] };
         }
 
         if (difficulty) {
@@ -194,7 +213,11 @@ export const getAllQuestions = async (req, res) => {
         const questions = await Question.find(filter);
         res.status(200).json(questions);
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        if (error.name === 'CastError') {
+            res.status(400).json({ message: error.message });
+        } else {
+            res.status(500).json({ message: "Internal Server Error" });
+        }
     }
 }
 
@@ -210,6 +233,10 @@ export const getQuestionById = async (req, res) => {
 
         res.status(200).json(question);
     } catch (error) {
-        res.status(400).json({ message: error.message });
+        if (error.name === 'CastError') {
+            res.status(400).json({ message: error.message });
+        } else {
+            res.status(500).json({ message: "Internal Server Error" });
+        }
     }
 }
