@@ -59,7 +59,7 @@ const EditQuestion = ({ open, handleClose, question }) => {
               formData.append(key, updatedQuestionData[key]);
           }
       }
-  
+
       for (let i = 0; i < imageFiles.length; i++) {
           formData.append('imageFiles', imageFiles[i]);
       }
@@ -69,7 +69,7 @@ const EditQuestion = ({ open, handleClose, question }) => {
           window.location.reload(); // Refresh the page after the update
           handleClose();
       } catch (error) {
-          setErrorMessage('Error updating question: ' + error);
+          setErrorMessage(error.message);
           setErrorOpen(true); // Open error dialog
       }
     };

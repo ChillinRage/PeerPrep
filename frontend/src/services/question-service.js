@@ -12,8 +12,7 @@ const createQuestion = async (formData) => {
         });
         return response.data;
     } catch (error) {
-        console.error('Error creating question:', error);
-        throw error;
+        throw _reformatAndLogError('Error creating question:', error);
     }
 }
 
@@ -27,8 +26,7 @@ const updateQuestion = async (id, formData) => {
         });
         return response.data;
     } catch (error) {
-        console.error('Error updating question:', error);
-        throw error;
+        throw _reformatAndLogError('Error updating question:', error);
     }
 }
 
@@ -38,8 +36,7 @@ const deleteQuestion = async (id) => {
         const response = await axios.delete(`${BASE_URL}/${id}`);
         return response.data;
     } catch (error) {
-        console.error('Error deleting question:', error);
-        throw error;
+        throw _reformatAndLogError('Error deleting question:', error);
     }
 }
 
@@ -49,8 +46,7 @@ const getQuestionById = async (id) => {
         const response = await axios.get(`${BASE_URL}/${id}`);
         return response.data;
     } catch (error) {
-        console.error('Error getting question by id:', error);
-        throw error;
+        throw _reformatAndLogError('Error getting question by id:', error);
     }
 };
 
@@ -60,8 +56,7 @@ const filterQuestions = async (category, filter) => {
         const response = await axios.get(`${BASE_URL}?${category}=${filter}`);
         return response.data;
     } catch (error) {
-        console.error('Error filtering questions:', error);
-        throw error;
+        throw _reformatAndLogError('Error filtering questions:', error);
     }
 };
 
@@ -71,9 +66,19 @@ const getAllQuestions = async () => {
         const response = await axios.get(BASE_URL);
         return response.data;
     } catch (error) {
-        console.error('Error getting all questions:', error);
-        throw error;
+        throw _reformatAndLogError('Error getting all questions:', error);
     }
 };
+
+const _reformatAndLogError = (action, error) => {
+    // reformat error message to be user friendly
+    error.message = error.response
+        ? error.response.data.message
+        : error.request
+        ? "Unable to connect to the network"
+        : `AxiosError (${error.message})`;
+    console.error(action, error);
+    return error;
+}
 
 export default { createQuestion, updateQuestion, deleteQuestion, getQuestionById, filterQuestions, getAllQuestions };
