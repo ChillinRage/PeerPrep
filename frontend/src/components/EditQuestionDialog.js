@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Button, TextField, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem } from '@mui/material';
-import ErrorMessage from './ErrorMessageDialog'
+import TopicsField from './formFields/topics';
+import ErrorMessage from './ErrorMessageDialog';
 import questionService from '../services/question-service';
 import '../styles/create-question-dialog.css';
 
@@ -14,7 +15,7 @@ const EditQuestion = ({ open, handleClose, question }) => {
     const [questionData, setQuestionData] = React.useState({
       title: question?.title || '',
       description: question?.description || '',
-      topic: question?.topic.join(', ') || '', // Convert array to comma-separated string
+      topic: question?.topic || [],
       difficulty: question?.difficulty || 'Easy',
       input: question?.input || '',
       expected_output: question?.expected_output || '',
@@ -108,19 +109,7 @@ const EditQuestion = ({ open, handleClose, question }) => {
               onChange={handleInputChange}
               className="text-field"
             />
-            <TextField
-              margin="dense"
-              required
-              id="topic"
-              name="topic"
-              label="Topics (comma separated)"
-              type="text"
-              fullWidth
-              multiline
-              value={questionData.topic}
-              onChange={handleInputChange}
-              className="text-field"
-            />
+            <TopicsField defaultTopics={questionData.topic}/>
             <TextField
               margin="dense"
               fullWidth
