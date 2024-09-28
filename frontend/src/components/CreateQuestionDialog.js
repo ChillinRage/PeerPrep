@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Button, TextField, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem } from '@mui/material';
-import ErrorMessage from './ErrorMessageDialog'
+import TopicsField from './formFields/topics';
+import ErrorMessage from './ErrorMessageDialog';
 import questionService from '../services/question-service';
 import '../styles/create-question-dialog.css';
 
@@ -96,17 +97,7 @@ const CreateQuestion = ({ open, handleClose }) => {
                             rows={4}
                             className="text-field"
                         />
-                        <TextField
-                            margin="dense"
-                            required
-                            id="topic"
-                            name="topic"
-                            label="Topics (comma separated)"
-                            type="text"
-                            fullWidth
-                            multiline
-                            className="text-field"
-                        />
+                        <TopicsField defaultTopics={[]}/>
                         <TextField
                             margin="dense"
                             fullWidth
@@ -115,7 +106,6 @@ const CreateQuestion = ({ open, handleClose }) => {
                             label="Difficulty Level"
                             defaultValue="Easy"
                             onChange={handleDifficultyChange}
-                            helperText="Select the difficulty level"
                             className="text-field"
                         >
                             {difficulty_lvl.map((option) => (
