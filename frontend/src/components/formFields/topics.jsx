@@ -22,6 +22,7 @@ const TopicsField = ({defaultTopics}) => {
           name='topic'
           value={selectedTopics}
           onChange={handleTopicChange}
+          required
           multiple
           input={<OutlinedInput id="select-multiple-chip" label="Chip" />}
           renderValue={(selected) => (
