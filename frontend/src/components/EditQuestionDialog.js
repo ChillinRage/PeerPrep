@@ -48,7 +48,6 @@ const EditQuestion = ({ open, handleClose, question }) => {
       event.preventDefault();
       const updatedQuestionData = {
           ...questionData,
-          topic: questionData.topic.split(',').map((t) => t.trim()), // Convert topics back to array
           images: questionData.images.split(',').map((img) => img.trim()) // Convert images back to array
       };
   

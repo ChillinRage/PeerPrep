@@ -3,10 +3,15 @@ import { OutlinedInput, InputLabel, Select, MenuItem, FormControl, Box, Chip } f
 import '../../styles/create-question-dialog.css';
 
 const topics = [
-  { value: 'Strings', label: 'Strings'},
   { value: 'Algorithms', label: 'Algorithms'},
   { value: 'Bit Manipulation', label: 'Bit Manipulation'},
+  { value: 'Brainteaser', label: 'Brainteaser'},
+  { value: 'Databases', label: 'Databases'},
   { value: 'Data Structures', label: 'Data Structures'},
+  { value: 'Dynamic Programming', label: 'Dynamic Programming'},
+  { value: 'Greedy', label: 'Greedy'},
+  { value: 'Math', label: 'Math'},
+  { value: 'Strings', label: 'Strings'},
 ];
 
 const TopicsField = ({defaultTopics}) => {
